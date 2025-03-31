@@ -1,0 +1,111 @@
+const dados = require("prompt-sync")();
+const { initializeApp } = require("firebase/app");
+const { getFirestore, collection, addDoc, getDocs, orderBy, query } = require("firebase/firestore");
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDFutmHYhkz0Tb9yb--dCSLHnJXOECPW_Q",
+  authDomain: "projeto-35d67.firebaseapp.com",
+  projectId: "projeto-35d67",
+  storageBucket: "projeto-35d67.appspot.com",
+  messagingSenderId: "440367551980",
+  appId: "1:440367551980:web:f39b406ccbdd4333711cc9",
+  measurementId: "G-39ZD323S0M",
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const scoresRef = collection(db, "scores");
+//recebe pontos tbm, esse db ja veio da confi do firebase
+
+ const palavras = [
+ "casa", "livro", "amigo", "feliz", "carro", "computador", "elefante", "janela",
+ "escola", "professor", "lousa", "cadeira", "telefone", "estudante", "teclado",
+ "mouse", "programador", "código", "piscina", "praia", "montanha", "chuva",
+  "sol", "lua", "planeta", "galáxia", "estrela", "universo", "cidade",
+ "bairro", "rua", "avenida", "mercado", "restaurante", "biblioteca",
+  "livraria", "farmácia", "hospital", "médico", "enfermeiro", "cirurgião",
+"advogado", "engenheiro", "arquiteto", "astronauta", "cientista", "biólogo",
+"físico", "químico", "matemático", "historiador", "filósofo", "antropólogo"
+];
+//fonte de palavras: open AI
+
+let ps = palavras[Math.floor(Math.random() * palavras.length)];
+
+const nomeUsuario = dados("digite seu nick: ");
+//pra nao trabalha somente com o nome 
+console.log("A palavra tem", ps.length, "letras.");
+
+let opcao = parseInt(dados("escolha uma opção:\n1. Jogo com chances\n2. jogo até acertar\nDigite: "));
+//é pra função ta ligada ao banco de dados
+async function game(ps, opcao) {
+  let c = 1;
+  let pontos = 0;
+
+  if (opcao === 1) {
+    let tt = parseInt(dados("informe quantas tentativas você quer: "));
+    while (c <= tt) {
+      let p = dados("informe a palavra: ").toLowerCase().trim();
+      if (p === ps) {
+        console.log("✅ VOCÊ ACERTOU na tentativa", c, "!");
+        pontos = tt - c + 1;
+        break;
+      } else {
+        mostrarDicas(p, ps);
+      }
+      c++;
+    }
+  } else if (opcao === 2) {
+    while (true) {
+      let p = dados("informe a palavra: ").toLowerCase().trim();
+      if (p === ps) {
+        console.log("✅ VOCÊ ACERTOU na tentativa", c, "!");
+        pontos = 10 - c;
+        break;
+      } else {
+        mostrarDicas(p, ps);
+      }
+      c++;
+    }
+  } else {
+    console.log("opção inválida.");
+  }
+
+  try {
+    await addDoc(scoresRef, {
+      nome: nomeUsuario,
+      pontos: pontos,
+      data: new Date(),
+      //vai adiconar a ponteção a tabela de banco de dadso
+    });
+    console.log("pontuação registrada!");
+    await exibirTabelaPontos();
+  } catch (error) {
+    console.error("erro ao salvar pontuação:", error);
+  }
+}
+
+function mostrarDicas(palpite, palavraSecreta) {
+  let dicas = "";
+
+  for (let i = 0; i < palavraSecreta.length; i++) {
+    if (palpite[i] === palavraSecreta[i]) {
+      dicas += "🟩 " + palpite[i] + " ";
+    } else if (palavraSecreta.includes(palpite[i])) {
+      dicas += "🟨 " + palpite[i] + " ";
+    } else {
+      dicas += "⬛ _ ";
+      //surpreendemente, deu certo
+    }
+  }
+
+  console.log("dica:", dicas.trim());
+  //ain tem x letras, essa boiolage ai nao aguento mais
+}
+
+
+
+game(ps, opcao);
+
+
+/* TIRAR A PORCARIA DO BANCO DE DADOS PQ TA DANDO ERRO E NAO SABO MAIS OQ FAZEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE */
+// usar sequelize
